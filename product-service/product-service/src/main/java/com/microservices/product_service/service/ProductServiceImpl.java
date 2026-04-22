@@ -40,6 +40,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+public List<Product> getProductsAbovePrice(double price) {
+    return productRepository.findProductsAbovePrice(price);
+}
+
+    @Override
     public Product updateProduct(Integer id, Product product) {
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));

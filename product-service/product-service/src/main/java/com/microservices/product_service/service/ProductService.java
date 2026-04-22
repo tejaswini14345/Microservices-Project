@@ -17,4 +17,6 @@ public interface ProductService {
 
     // NEW (Streams)
     List<Product> filterExpensiveProducts(double minPrice);
+
+    List<Product> getProductsAbovePrice(double price);
 }
