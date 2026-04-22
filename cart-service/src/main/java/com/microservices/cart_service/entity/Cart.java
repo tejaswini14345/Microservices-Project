@@ -1,9 +1,9 @@
 package com.microservices.cart_service.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,6 +21,6 @@ public class Cart {
 
     private Integer userId;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
-    private List<CartItem> items;
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> items = new ArrayList<>();
 }

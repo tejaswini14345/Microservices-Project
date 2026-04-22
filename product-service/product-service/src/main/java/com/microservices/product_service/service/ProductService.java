@@ -7,8 +7,14 @@ import com.microservices.product_service.entity.Product;
 public interface ProductService {
 
     Product createProduct(Product product);
-
-    Product getProductById(Integer id);
-
     List<Product> getAllProducts();
+    Product getProductById(Integer id);
+    Product updateProduct(Integer id, Product product);
+    void deleteProduct(Integer id);
+
+    // NEW (Pagination)
+    List<Product> getProductsPaginated(int page, int size, String sortBy);
+
+    // NEW (Streams)
+    List<Product> filterExpensiveProducts(double minPrice);
 }
