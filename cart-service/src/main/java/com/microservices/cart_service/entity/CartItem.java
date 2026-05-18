@@ -1,5 +1,6 @@
 package com.microservices.cart_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,11 +17,16 @@ public class CartItem {
     private Integer id;
 
     private Integer productId;
+
     private String productName;
+
     private Double price;
+
     private Integer quantity;
 
     @ManyToOne
     @JoinColumn(name = "cart_id")
+
+    @JsonIgnore
     private Cart cart;
 }

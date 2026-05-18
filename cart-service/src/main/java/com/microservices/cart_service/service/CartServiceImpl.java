@@ -6,45 +6,48 @@ import com.microservices.cart_service.entity.CartItem;
 import com.microservices.cart_service.repository.CartRepository;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
-    public CartServiceImpl(CartRepository cartRepository, RestTemplate restTemplate) {
+    // constructor injection
+    public CartServiceImpl(CartRepository cartRepository, WebClient webClient) {
         this.cartRepository = cartRepository;
-        this.restTemplate = restTemplate;
+        this.webClient = webClient;
     }
 
     @Override
     public Cart createCart(Cart cart) {
 
-        // safety check: cart must have items
+        // validate cart
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new RuntimeException("Cart must have at least one item");
         }
 
-        // take first item
         CartItem item = cart.getItems().get(0);
 
         // call product service
         String url = "http://localhost:8081/products/" + item.getProductId();
+        Product product = webClient
+        .get()
+        .uri(url)
+        .retrieve()
+        .bodyToMono(Product.class)
+        .block();
 
-        Product product = restTemplate.getForObject(url, Product.class);
-
-        // null check FIRST
         if (product == null) {
             throw new RuntimeException("Product not found");
         }
 
-        // fill product details into cart item
+        // fill data
         item.setProductName(product.getName());
         item.setPrice(product.getPrice());
 
-        // link item to cart (VERY IMPORTANT)
+        // link cart
         item.setCart(cart);
 
         return cartRepository.save(cart);
