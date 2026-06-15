@@ -1,10 +1,11 @@
 package com.microservices.cart_service.service;
 
-import com.microservices.cart_service.dto.*;
+import com.microservices.cart_service.dto.CartItemDTO;
+import com.microservices.cart_service.dto.CartResponseDTO;
+import com.microservices.cart_service.dto.Product;
 import com.microservices.cart_service.entity.Cart;
 import com.microservices.cart_service.entity.CartItem;
 import com.microservices.cart_service.repository.CartRepository;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -15,10 +16,14 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final WebClient webClient;
+    private final KafkaProducerService kafkaProducerService;
 
-    public CartServiceImpl(CartRepository cartRepository, WebClient webClient) {
+    public CartServiceImpl(CartRepository cartRepository,
+                           WebClient webClient,
+                           KafkaProducerService kafkaProducerService) {
         this.cartRepository = cartRepository;
         this.webClient = webClient;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @Override
@@ -30,7 +35,6 @@ public class CartServiceImpl implements CartService {
 
         CartItem firstItem = cart.getItems().get(0);
 
-        // call product service
         Product product = webClient
                 .get()
                 .uri("http://localhost:8081/products/" + firstItem.getProductId())
@@ -42,28 +46,28 @@ public class CartServiceImpl implements CartService {
             throw new RuntimeException("Product not found");
         }
 
-        // fill cart item
         firstItem.setProductName(product.getName());
         firstItem.setPrice(product.getPrice());
         firstItem.setCart(cart);
 
-        // save cart
         Cart savedCart = cartRepository.save(cart);
 
-        // convert to DTO
-        List<CartItemDTO> itemDTOs = savedCart.getItems().stream().map(ci -> {
+        String kafkaMessage =
+                "CartId: " + savedCart.getId()
+                        + ", ProductId: " + firstItem.getProductId()
+                        + ", Quantity: " + firstItem.getQuantity();
 
+        kafkaProducerService.sendMessage(kafkaMessage);
+
+        List<CartItemDTO> itemDTOs = savedCart.getItems().stream().map(ci -> {
             CartItemDTO dto = new CartItemDTO();
             dto.setProductId(ci.getProductId());
             dto.setProductName(ci.getProductName());
             dto.setPrice(ci.getPrice());
             dto.setQuantity(ci.getQuantity());
-
             return dto;
-
         }).toList();
 
-        // response DTO
         CartResponseDTO response = new CartResponseDTO();
         response.setCartId(savedCart.getId());
         response.setUserId(savedCart.getUserId());
