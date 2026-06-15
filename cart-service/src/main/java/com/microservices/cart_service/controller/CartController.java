@@ -1,5 +1,6 @@
 package com.microservices.cart_service.controller;
 
+import com.microservices.cart_service.dto.CartResponseDTO;
 import com.microservices.cart_service.entity.Cart;
 import com.microservices.cart_service.service.CartService;
 
@@ -16,7 +17,7 @@ public class CartController {
     }
 
     @PostMapping
-    public Cart createCart(@RequestBody Cart cart) {
+    public CartResponseDTO createCart(@RequestBody Cart cart) {
         return cartService.createCart(cart);
     }
 
