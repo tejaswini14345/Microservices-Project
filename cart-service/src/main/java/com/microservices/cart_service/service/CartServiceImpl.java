@@ -17,13 +17,16 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final WebClient webClient;
     private final KafkaProducerService kafkaProducerService;
+    private final AsyncCartService asyncCartService;
 
     public CartServiceImpl(CartRepository cartRepository,
                            WebClient webClient,
-                           KafkaProducerService kafkaProducerService) {
+                           KafkaProducerService kafkaProducerService,
+                           AsyncCartService asyncCartService) {
         this.cartRepository = cartRepository;
         this.webClient = webClient;
         this.kafkaProducerService = kafkaProducerService;
+        this.asyncCartService = asyncCartService;
     }
 
     @Override
@@ -58,6 +61,8 @@ public class CartServiceImpl implements CartService {
                         + ", Quantity: " + firstItem.getQuantity();
 
         kafkaProducerService.sendMessage(kafkaMessage);
+
+        asyncCartService.processCartAsync();
 
         List<CartItemDTO> itemDTOs = savedCart.getItems().stream().map(ci -> {
             CartItemDTO dto = new CartItemDTO();
