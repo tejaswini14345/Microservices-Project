@@ -6,6 +6,9 @@ import com.microservices.cart_service.dto.Product;
 import com.microservices.cart_service.entity.Cart;
 import com.microservices.cart_service.entity.CartItem;
 import com.microservices.cart_service.repository.CartRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -13,6 +16,9 @@ import java.util.List;
 
 @Service
 public class CartServiceImpl implements CartService {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(CartServiceImpl.class);
 
     private final CartRepository cartRepository;
     private final WebClient webClient;
@@ -31,6 +37,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponseDTO createCart(Cart cart) {
+
+        logger.info("Creating cart...");
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new RuntimeException("Cart must have at least one item");
@@ -55,12 +63,16 @@ public class CartServiceImpl implements CartService {
 
         Cart savedCart = cartRepository.save(cart);
 
+        logger.info("Cart saved successfully with id {}", savedCart.getId());
+
         String kafkaMessage =
                 "CartId: " + savedCart.getId()
                         + ", ProductId: " + firstItem.getProductId()
                         + ", Quantity: " + firstItem.getQuantity();
 
         kafkaProducerService.sendMessage(kafkaMessage);
+
+        logger.info("Kafka message sent");
 
         asyncCartService.processCartAsync();
 

@@ -3,7 +3,7 @@ package com.microservices.cart_service.controller;
 import com.microservices.cart_service.dto.CartResponseDTO;
 import com.microservices.cart_service.entity.Cart;
 import com.microservices.cart_service.service.CartService;
-
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +17,7 @@ public class CartController {
     }
 
     @PostMapping
-    public CartResponseDTO createCart(@RequestBody Cart cart) {
+    public CartResponseDTO createCart(@Valid @RequestBody Cart cart) {
         return cartService.createCart(cart);
     }
 
