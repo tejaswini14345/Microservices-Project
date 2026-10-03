@@ -16,14 +16,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
           cache-dependency-path: product-service/pom.xml
       - name: Run product service tests
-        run: ./mvnw --batch-mode test
+        run: chmod +x mvnw && ./mvnw --batch-mode test
 
   cart-service:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
