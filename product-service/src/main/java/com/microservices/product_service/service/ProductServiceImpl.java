@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.microservices.product_service.entity.Product;
+import com.microservices.product_service.exception.ProductNotFoundException;
 import com.microservices.product_service.repository.ProductRepository;
 
 @Service
@@ -18,12 +19,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
+        product.setId(null);
         return productRepository.save(product);
     }
 
     @Override
     public Product getProductById(Integer id) {
-        return productRepository.findById(id).orElse(null);
+        return findProduct(id);
     }
 
     @Override
@@ -33,18 +35,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Integer id) {
-        productRepository.deleteById(id);
+        Product existing = findProduct(id);
+        productRepository.delete(existing);
     }
 
     @Override
     public Product updateProduct(Integer id, Product product) {
-        Product existing = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Product existing = findProduct(id);
 
         existing.setName(product.getName());
         existing.setPrice(product.getPrice());
         existing.setQuantity(product.getQuantity());
 
         return productRepository.save(existing);
+    }
+
+    private Product findProduct(Integer id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 }

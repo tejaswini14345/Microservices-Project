@@ -1,8 +1,9 @@
 package com.microservices.product_service.controller;
 
+import java.net.URI;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,48 +12,53 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.microservices.product_service.entity.Product;
 import com.microservices.product_service.service.ProductService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
-    // CREATE
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
     @PostMapping
-    public Product createProduct(@RequestBody Product product) {
-        return productService.createProduct(product);
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
+        Product created = productService.createProduct(product);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(created);
     }
 
-    // READ ALL
     @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
-    // READ BY ID
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable Integer id) {
-        return productService.getProductById(id);
+    public ResponseEntity<Product> getProduct(@PathVariable Integer id) {
+        return ResponseEntity.ok(productService.getProductById(id));
     }
 
-
-    @PutMapping("/{id}")   // ✅ THIS MUST EXIST
-    public Product update(@PathVariable Integer id,
-                          @RequestBody Product product) {
-        return productService.updateProduct(id, product);
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Integer id,
+            @Valid @RequestBody Product product) {
+        return ResponseEntity.ok(productService.updateProduct(id, product));
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
-    public String deleteProduct(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
         productService.deleteProduct(id);
-        return "Product deleted successfully";
-
-
-}
+        return ResponseEntity.noContent().build();
     }
+}
