@@ -1,62 +1,38 @@
 # Microservices Project
 
-A Java/Spring Boot project for building a service-oriented backend around product and cart functionality.
+A Java/Spring Boot backend project with two independently runnable services: **Product Service** and **Cart Service**.
 
-The repository is currently centered on a working **Product Service**. It provides RESTful CRUD operations backed by Spring Data JPA and an in-memory H2 database. The project also includes dependencies for Kafka and reactive HTTP communication as the application evolves toward multiple communicating services.
+The project demonstrates REST API design, service-to-service communication, validation, persistence, exception handling, automated tests, containerization, and CI.
 
-## Current Implementation
+## Architecture
+
+```text
+Client
+  |
+  +--------------------+
+  |                    |
+  v                    v
+Product Service      Cart Service
+:8081                :8082
+  |                    |
+  |                    +---- REST lookup ----> Product Service
+  v                    v
+H2 Product DB        H2 Cart DB
+```
+
+The Cart Service validates requested products against Product Service before adding them to the cart.
+
+## Services
 
 ### Product Service
 
-The Product Service currently supports:
+Responsibilities:
 
-- Create a product
-- Retrieve all products
-- Retrieve a product by ID
-- Update a product
-- Delete a product
-- Persistence through Spring Data JPA
-- Local development with an H2 in-memory database
-
-## Tech Stack
-
-- Java 17
-- Spring Boot 3.5.x
-- Spring Web
-- Spring Data JPA
-- Spring Validation
-- H2 Database
-- Maven
-- Lombok
-
-### Dependencies prepared for expansion
-
-The build also includes:
-
-- Spring Kafka
-- Spring WebFlux / WebClient
-- Microsoft SQL Server JDBC driver
-
-These dependencies provide a foundation for future event-driven communication, service-to-service calls, and migration from the local H2 database to SQL Server.
-
-## Project Structure
-
-```text
-Microservices-Project/
-└── product-service/
-    ├── src/main/java/com/microservices/product_service/
-    │   ├── controller/
-    │   ├── entity/
-    │   ├── repository/
-    │   └── service/
-    ├── src/main/resources/
-    │   └── application.properties
-    └── pom.xml
-```
-
-## Product API
-
-The Product Service runs locally on port `8081`.
+- Create, retrieve, update, and delete products
+- Validate product name, price, and inventory
+- Return proper HTTP status codes
+- Return structured validation and not-found errors
+- Persist product data through Spring Data JPA
 
 Base URL:
 
@@ -68,66 +44,128 @@ http://localhost:8081/products
 | --- | --- | --- |
 | POST | `/products` | Create a product |
 | GET | `/products` | Get all products |
-| GET | `/products/{id}` | Get a product by ID |
+| GET | `/products/{id}` | Get a product |
 | PUT | `/products/{id}` | Update a product |
 | DELETE | `/products/{id}` | Delete a product |
 
-## Run Locally
+### Cart Service
 
-### Prerequisites
+Responsibilities:
+
+- Add products to a cart
+- Retrieve cart items
+- Remove individual cart items
+- Clear the cart
+- Look up product information from Product Service
+- Reject quantities above available product inventory
+
+Base URL:
+
+```text
+http://localhost:8082/cart/items
+```
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/cart/items` | Get cart items |
+| POST | `/cart/items` | Add an item |
+| DELETE | `/cart/items/{id}` | Remove an item |
+| DELETE | `/cart/items` | Clear the cart |
+
+Example request:
+
+```json
+{
+  "productId": 1,
+  "quantity": 2
+}
+```
+
+## Tech Stack
 
 - Java 17
-- Maven, or use the included Maven wrapper
+- Spring Boot 3.5.x
+- Spring Web
+- Spring Data JPA
+- Bean Validation
+- Spring RestClient
+- H2
+- Maven
+- JUnit 5
+- Mockito
+- Docker
+- GitHub Actions
 
-From the repository root:
+## Run Locally
+
+Start Product Service:
 
 ```bash
 cd product-service
 ./mvnw spring-boot:run
 ```
 
-On Windows:
+Start Cart Service in another terminal:
 
-```powershell
+```bash
+cd cart-service
+mvn spring-boot:run
+```
+
+## Run with Docker Compose
+
+From the repository root:
+
+```bash
+docker compose up --build
+```
+
+Product Service will be available at port `8081`, and Cart Service at port `8082`.
+
+## Testing
+
+Product Service:
+
+```bash
 cd product-service
-mvnw.cmd spring-boot:run
+./mvnw test
 ```
 
-The H2 console is enabled at:
+Cart Service:
+
+```bash
+cd cart-service
+mvn test
+```
+
+Both services are also tested automatically by GitHub Actions on pull requests.
+
+## Project Structure
 
 ```text
-http://localhost:8081/h2-console
+Microservices-Project/
+├── product-service/
+├── cart-service/
+├── docker-compose.yml
+└── .github/workflows/
 ```
 
-The configured JDBC URL is:
+## Engineering Improvements Included
 
-```text
-jdbc:h2:mem:testdb
-```
+- Constructor injection instead of field injection
+- Explicit not-found handling instead of returning null
+- Bean Validation at API boundaries
+- Structured REST responses
+- Unit tests for service behavior
+- Service-to-service product validation
+- Multi-stage Docker images
+- CI for both services
 
-## What This Project Demonstrates
+## Next Engineering Steps
 
-This project demonstrates backend fundamentals that are central to Java microservice development:
-
-- REST API design with Spring Boot
-- Controller/service/repository separation
-- JPA-based persistence
-- CRUD workflows
-- Maven dependency management
-- A foundation for Kafka-based event-driven communication and inter-service HTTP calls
-
-## Roadmap
-
-- Add the Cart Service
-- Implement service-to-service communication
-- Integrate Kafka producers and consumers
-- Add DTOs and validation
-- Add centralized exception handling
-- Add unit and integration tests
-- Add Docker support
-- Add API documentation with OpenAPI/Swagger
-- Add CI/CD with GitHub Actions
-
-## Status
-
-**In progress.** The Product Service is implemented and the repository is being expanded into a multi-service application.
+- Introduce DTO mapping in Product Service
+- Add API documentation with OpenAPI
+- Add integration tests across both services
+- Introduce Kafka only when there is a concrete event-driven use case
+- Move from in-memory H2 databases to persistent databases for deployed environments
+- Add observability and centralized logging
