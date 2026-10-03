@@ -1,4 +1,4 @@
-name: Product Service CI
+name: Services CI
 
 on:
   push:
@@ -7,16 +7,14 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  product-service:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: product-service
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -24,6 +22,23 @@ jobs:
           java-version: '17'
           cache: maven
           cache-dependency-path: product-service/pom.xml
-
-      - name: Run tests
+      - name: Run product service tests
         run: ./mvnw --batch-mode test
+
+  cart-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cart-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: cart-service/pom.xml
+      - name: Run cart service tests
+        run: mvn --batch-mode test
